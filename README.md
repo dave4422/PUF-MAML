@@ -2,6 +2,10 @@
 David Mildenberger
 
 ## Usage:
+Generate challenges and prepare data sets:
+```
+python gen_ro_data.py
+```
 ```
 python -m experiments.maml2 --dataset roPUF --order 2 --n 20 --k 1 --q 1 --meta-batch-size 75 --inner-train-steps 50 --inner-val-steps 10 --inner-lr 0.01 --eval-batches 5 --epoch-len 10 --test-board D070802 --challenge-size 64 --load-indexed False --epochs 1
 ```
