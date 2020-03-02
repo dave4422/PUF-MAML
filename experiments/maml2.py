@@ -13,6 +13,7 @@ from few_shot.train import fit
 from few_shot.callbacks import *
 from few_shot.utils import setup_dirs
 from config import PATH
+from few_shot.metrics import categorical_accuracy
 
 
 setup_dirs()
@@ -163,13 +164,31 @@ callbacks = [
     CSVLogger(PATH + f'/logs/maml2/{param_str}.csv'),
 ]
 
+
+
+fit(
+    meta_model,
+    meta_optimiser,
+    loss_fn,
+    epochs=args.epochs,
+    dataloader=background_taskloader,
+    prepare_batch=prepare_meta_batch(args.n, args.k, args.q, args.meta_batch_size),
+    callbacks=callbacks,
+    metrics=['categorical_accuracy'],
+    fit_function=meta_gradient_step,
+    fit_function_kwargs={'n_shot': args.n, 'k_way': args.k, 'q_queries': args.q,
+                         'train': True,
+                         'order': args.order, 'device': device, 'inner_train_steps': args.inner_train_steps,
+                         'inner_lr': args.inner_lr},
+)
+
 seen = 0
 totals = {'loss': 0, 'ca': 0}
 print(test_taskloader.dataset.subset)
 for batch_index, batch in enumerate(test_taskloader):
-    x, y = self.prepare_batch(batch)
+    x, y = (prepare_meta_batch(args.n, args.k, args.q, 1))(batch)
 
-    loss, y_pred = self.meta_gradient_step(
+    loss, y_pred = meta_gradient_step(
         meta_model,
         meta_optimiser,
         loss_fn,
@@ -192,19 +211,3 @@ for batch_index, batch in enumerate(test_taskloader):
 
 print(totals['loss'] / seen)
 print(totals['ca'] / seen)
-
-fit(
-    meta_model,
-    meta_optimiser,
-    loss_fn,
-    epochs=args.epochs,
-    dataloader=background_taskloader,
-    prepare_batch=prepare_meta_batch(args.n, args.k, args.q, args.meta_batch_size),
-    callbacks=callbacks,
-    metrics=['categorical_accuracy'],
-    fit_function=meta_gradient_step,
-    fit_function_kwargs={'n_shot': args.n, 'k_way': args.k, 'q_queries': args.q,
-                         'train': True,
-                         'order': args.order, 'device': device, 'inner_train_steps': args.inner_train_steps,
-                         'inner_lr': args.inner_lr},
-)
